@@ -1,0 +1,63 @@
+﻿<Window x:Class="MultiDimFunctionFitter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="500" Width="960">
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="80*"/>
+            <RowDefinition Height="300*"/>
+            <RowDefinition Height="40*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320*"/>
+            <ColumnDefinition Width="320*"/>
+            <ColumnDefinition Width="320*"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Orientation="Vertical" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" >
+            <Slider Name="SliderZoomOut" 
+                Minimum="0.01" Maximum="1" Value="1"
+                ValueChanged="SliderZoomOut_ValueChanged"/>
+            <Slider Name="SliderZoomIn" 
+                Minimum="1" Maximum="100" Value="1"
+                ValueChanged="SliderZoomIn_ValueChanged"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left">
+            <Label Name="LabelZoom" Width="40">1</Label>
+            <Button Name="ButtonResetZoom" Click="ButtonResetZoom_Click">Reset zoom</Button>
+            <Label Name="LabelInfo" Margin="20,0,0,0">0,0</Label>
+        </StackPanel>
+
+        <Label Name="LabelTodo"  Grid.Row="0" Grid.Column="2">Todo add density slider + generate reconstructed image</Label>
+        
+        <ScrollViewer Name="ScrollViewerSource" Grid.Row="1" Grid.Column="0" 
+                      ScrollChanged="ScrollViewer_ScrollChanged"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Visible"
+                      AllowDrop="True" Drop="ImageSource_Drop">
+            <Image Name="ImageSource"
+                   Stretch="None" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderTransformOrigin="0.5,0.5"
+                   MouseMove="ImageSource_MouseMove"/>
+        </ScrollViewer>
+        <ScrollViewer Name="ScrollViewerFiltered" Grid.Row="1" Grid.Column="1" 
+                      ScrollChanged="ScrollViewer_ScrollChanged"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Visible"
+                      AllowDrop="True" Drop="ImageFiltered_Drop">
+            <Image Name="ImageFiltered" 
+                   Stretch="None" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderTransformOrigin="0.5,0.5"
+                   MouseMove="ImageFiltered_MouseMove"/>
+        </ScrollViewer>
+        <ScrollViewer Name="ScrollViewerFitted" Grid.Row="1" Grid.Column="2" 
+                      ScrollChanged="ScrollViewer_ScrollChanged"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Visible">
+            <Image Name="ImageFitted" 
+                   Stretch="None" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderTransformOrigin="0.5,0.5"
+                   MouseMove="ImageFiltered_MouseMove"/>
+        </ScrollViewer>
+        <Label Name="LabelColorSource"   Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" />
+        <Label Name="LabelColorFiltered" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Left" />
+        <Label Name="LabelColorFitted"   Grid.Row="2" Grid.Column="2" HorizontalAlignment="Left" />
+        
+    </Grid>
+</Window>
