@@ -168,10 +168,9 @@ namespace MultiDimFunctionFitter
             double b3 = b1 * b2;
             //double d3 = d * d2;
 
-
-            double r = ri[0] * r3 + ri[1] * r2 + ri[2] * r1 + ri[3] * g3 + ri[4] * g2 + ri[5] * g1 + ri[6] * b3 + ri[7] * b2 + ri[8] * b1 + ri[9] * 1;
-            double g = gi[0] * r3 + gi[1] * r2 + gi[2] * r1 + gi[3] * g3 + gi[4] * g2 + gi[5] * g1 + gi[6] * b3 + gi[7] * b2 + gi[8] * b1 + gi[9] * 1;
-            double b = bi[0] * r3 + bi[1] * r2 + bi[2] * r1 + bi[3] * g3 + bi[4] * g2 + bi[5] * g1 + bi[6] * b3 + bi[7] * b2 + bi[8] * b1 + bi[9] * 1;
+            double r = ri[0] * r3 + ri[1] * g3 + ri[2] * b3 + ri[3] * r2 + ri[4] * g2 + ri[5] * b2 + ri[6] * r1 + ri[7] * g1 + ri[8] * b1 + ri[9] * 1;
+            double g = gi[0] * r3 + gi[1] * g3 + gi[2] * b3 + gi[3] * r2 + gi[4] * g2 + gi[5] * b2 + gi[6] * r1 + gi[7] * g1 + gi[8] * b1 + gi[9] * 1;
+            double b = bi[0] * r3 + bi[1] * g3 + bi[2] * b3 + bi[3] * r2 + bi[4] * g2 + bi[5] * b2 + bi[6] * r1 + bi[7] * g1 + bi[8] * b1 + bi[9] * 1;
 
             return Color.FromArgb(255, (byte)(r * 255), (byte)(g * 255), (byte)(b * 255));
         }
