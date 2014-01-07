@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using MathNet.Numerics.LinearAlgebra.Double;
+using MathNet.Numerics.LinearRegression;
 
 namespace MultiDimFunctionFitter
 {
@@ -361,18 +362,24 @@ namespace MultiDimFunctionFitter
 
             try
             {
-                var QR = X.QR();
+                // http://stackoverflow.com/a/20900765/758666
+                ri = MultipleRegression.QR(X, Yred).ToArray();
+                gi = MultipleRegression.QR(X, Ygreen).ToArray();
+                bi = MultipleRegression.QR(X, Yblue).ToArray();
 
-                ri = QR.Solve(Yred).ToArray();
-                gi = QR.Solve(Ygreen).ToArray();
-                bi = QR.Solve(Yblue).ToArray();
+                //ri = MultipleRegression.Svd(X, Yred).ToArray();
+                //gi = MultipleRegression.Svd(X, Ygreen).ToArray();
+                //bi = MultipleRegression.Svd(X, Yblue).ToArray();
 
-                // TODO use methods suggested in http://stackoverflow.com/a/20900765/758666
             }
             catch (System.Exception ex)
             {
-                MyCatch(ex);	
+                MyCatch(ex);
             }
+
+
+
+
 
 
             // now that we have the coefficients, we try to regenerate the filtered image
