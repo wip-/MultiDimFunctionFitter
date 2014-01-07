@@ -378,13 +378,30 @@ namespace MultiDimFunctionFitter
                 ri = QR.Solve(Yred).ToArray();
                 gi = QR.Solve(Ygreen).ToArray();
                 bi = QR.Solve(Yblue).ToArray();
+
+                // TODO use methods suggested in http://stackoverflow.com/a/20900765/758666
             }
             catch (System.Exception ex)
             {
                 MyCatch(ex);	
             }
 
-        }
+            // now that we have the coefficients, we try to regenerate the filtered image
 
+            bitmapInfoFitted = new BitmapInfo(width, height, bitmapInfoSource.PixelFormat);
+            for (int x = 0; x < width; ++x )
+            for (int y = 0; y < height; ++y)
+            {
+                System.Drawing.Color colorIn = bitmapInfoSource.GetPixelColor(x, y);
+                System.Drawing.Color colorOut = GetFittedColor(colorIn);
+                bitmapInfoFitted.SetPixelColor(x, y, colorOut);
+            }
+
+
+            ImageFitted.Source =
+                Imaging.CreateBitmapSourceFromHBitmap(
+                    bitmapInfoFitted.ToBitmap().GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, 
+                    System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+        }
     }
 }
