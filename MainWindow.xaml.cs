@@ -18,14 +18,19 @@ namespace MultiDimFunctionFitter
     {
         BitmapInfo bitmapInfoSource;
         BitmapInfo bitmapInfoFiltered;
-        BitmapInfo bitmapInfoFitted;    // TODO rebuild
+        BitmapInfo bitmapInfoFitted;
+
         double[] ri;    // coefficients
         double[] gi;    // coefficients
         double[] bi;    // coefficients
 
+        private int[] orders = new int[] { 0,1,2,3,4,5,6,7,8,9 };
+        public int[] Orders{get { return orders; }}
+
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = this;
         }
 
         private void SliderZoomOut_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -115,20 +120,25 @@ namespace MultiDimFunctionFitter
             Image_MouseMove(ImageFiltered, e);
         }
 
+        private void ImageFitted_MouseMove(object sender, MouseEventArgs e)
+        {
+            Image_MouseMove(ImageFitted, e);
+        }
+
         private void Image_MouseMove(System.Windows.Controls.Image clickedImage, MouseEventArgs e)
         {
             int x = (int)(e.GetPosition(clickedImage).X);
             int y = (int)(e.GetPosition(clickedImage).Y);
 
             BitmapInfo[] bitmapInfos =
-                new BitmapInfo[] { bitmapInfoSource, bitmapInfoFiltered };
+                new BitmapInfo[] { bitmapInfoSource, bitmapInfoFiltered, bitmapInfoFitted };
 
             System.Windows.Controls.Label[] labels =
-                new System.Windows.Controls.Label[] { LabelColorSource, LabelColorFiltered };
+                new System.Windows.Controls.Label[] { LabelColorSource, LabelColorFiltered, LabelColorFitted };
 
             LabelInfo.Content = String.Format("X={0:D4}, Y={1:D4}", x, y);
 
-            for (int i = 0; i < 2; ++i)
+            for (int i = 0; i < 3; ++i)
             {
                 if (bitmapInfos[i] == null) continue;
 
@@ -140,12 +150,12 @@ namespace MultiDimFunctionFitter
 
 
             // TODO show in LabelColorFitted the value of interpolated surface
-            if (ri!=null)
+            if (ri != null)
             {
                 Color colorIn = bitmapInfoSource.GetPixelColor(x, y);
                 Color colorFitted = GetFittedColor(colorIn);
                 float hue = colorFitted.GetHue();
-                LabelColorFitted.Content = String.Format("A={0:D3}, R={1:D3}, G={2:D3}, B={3:D3}, H={4:###.##}",
+                LabelColorFittedFormula.Content = String.Format("A={0:D3}, R={1:D3}, G={2:D3}, B={3:D3}, H={4:###.##}",
                     colorFitted.A, colorFitted.R, colorFitted.G, colorFitted.B, hue);
             }
         }
@@ -153,26 +163,29 @@ namespace MultiDimFunctionFitter
 
         private Color GetFittedColor(Color colorIn)
         {
-            double r1 = colorIn.RNormalized();
-            double g1 = colorIn.GNormalized();
-            double b1 = colorIn.BNormalized();
-            //double d = : TODO density
+            double r = colorIn.RNormalized();
+            double g = colorIn.GNormalized();
+            double b = colorIn.BNormalized();
+            double d = 1; // TODO get density from slider
 
-            double r2 = r1 * r1;
-            double g2 = g1 * g1;
-            double b2 = b1 * b1;
-            //double d2 = d * d;
+            int polynomialOrder = Convert.ToInt32(ComboBoxPolynomialOrder.SelectedValue);
 
-            double r3 = r1 * r2;
-            double g3 = g1 * g2;
-            double b3 = b1 * b2;
-            //double d3 = d * d2;
+            double rOut = ri[0];
+            double gOut = gi[0];
+            double bOut = bi[0];
 
-            double r = ri[0] * r3 + ri[1] * g3 + ri[2] * b3 + ri[3] * r2 + ri[4] * g2 + ri[5] * b2 + ri[6] * r1 + ri[7] * g1 + ri[8] * b1 + ri[9] * 1;
-            double g = gi[0] * r3 + gi[1] * g3 + gi[2] * b3 + gi[3] * r2 + gi[4] * g2 + gi[5] * b2 + gi[6] * r1 + gi[7] * g1 + gi[8] * b1 + gi[9] * 1;
-            double b = bi[0] * r3 + bi[1] * g3 + bi[2] * b3 + bi[3] * r2 + bi[4] * g2 + bi[5] * b2 + bi[6] * r1 + bi[7] * g1 + bi[8] * b1 + bi[9] * 1;
+            for (int i = 0; i < polynomialOrder; ++i)
+            {
+                double rPow = Math.Pow(r, i+1);
+                double gPow = Math.Pow(g, i+1);
+                double bPow = Math.Pow(b, i+1);
 
-            return Color.FromArgb(255, (byte)(r * 255), (byte)(g * 255), (byte)(b * 255));
+                rOut += ri[3 * i + 1] * rPow + ri[3 * i + 2] * gPow + ri[3 * i + 3] * bPow;
+                gOut += gi[3 * i + 1] * rPow + gi[3 * i + 2] * gPow + gi[3 * i + 3] * bPow;
+                bOut += bi[3 * i + 1] * rPow + bi[3 * i + 2] * gPow + bi[3 * i + 3] * bPow;
+            }
+
+            return Color.FromArgb(255, (byte)(rOut * 255), (byte)(gOut * 255), (byte)(bOut * 255));
         }
 
 
@@ -279,23 +292,22 @@ namespace MultiDimFunctionFitter
             int width = bitmapInfoSource.Width;
             int height = bitmapInfoSource.Height;
             int pixelsCount = width * height;
+            int polynomialOrder = Convert.ToInt32(ComboBoxPolynomialOrder.SelectedValue);
 
-            double[] Rinputs3 = new double[pixelsCount];
-            double[] Ginputs3 = new double[pixelsCount];
-            double[] Binputs3 = new double[pixelsCount];
-            double[] Dinputs3 = new double[pixelsCount]; // we will need density too
-            
-            double[] Rinputs2 = new double[pixelsCount];
-            double[] Ginputs2 = new double[pixelsCount];
-            double[] Binputs2 = new double[pixelsCount];
-            double[] Dinputs2 = new double[pixelsCount]; // we will need density too
+            List<double[]> RpowersInputs = new List<double[]>();
+            List<double[]> GpowersInputs = new List<double[]>();
+            List<double[]> BpowersInputs = new List<double[]>();
+            List<double[]> DpowersInputs = new List<double[]>();
+            for (int i = 0; i < polynomialOrder; ++i )
+            {
+                RpowersInputs.Add(new double[pixelsCount]);
+                GpowersInputs.Add(new double[pixelsCount]);
+                BpowersInputs.Add(new double[pixelsCount]);
+                DpowersInputs.Add(new double[pixelsCount]);
+            }
 
-            double[] Rinputs1 = new double[pixelsCount];
-            double[] Ginputs1 = new double[pixelsCount];
-            double[] Binputs1 = new double[pixelsCount];
-            double[] Dinputs1 = new double[pixelsCount]; // we will need density too
 
-            double[] Cinputs0 = new double[pixelsCount];
+            double[] ConstantInputs = new double[pixelsCount];
 
             double[] Routputs = new double[pixelsCount];
             double[] Goutputs = new double[pixelsCount];
@@ -306,36 +318,23 @@ namespace MultiDimFunctionFitter
             for (int x = 0; x < width; ++x )
             for (int y = 0; y < height; ++y )
             {
-                System.Drawing.Color colorIn = bitmapInfoSource.GetPixelColor(x, y);
-                System.Drawing.Color colorOut = bitmapInfoFiltered.GetPixelColor(x, y);
+                ConstantInputs[counter] = 1;
 
+                System.Drawing.Color colorIn = bitmapInfoSource.GetPixelColor(x, y);
                 double r = colorIn.RNormalized();
                 double g = colorIn.GNormalized();
                 double b = colorIn.BNormalized();
-                //double d = sample id
+                double d = 1.0; // TODO load from image
+                for (int i = 0; i < polynomialOrder; ++i)
+                {
+                    RpowersInputs[i][counter] = Math.Pow(r, i + 1);
+                    GpowersInputs[i][counter] = Math.Pow(g, i + 1);
+                    BpowersInputs[i][counter] = Math.Pow(b, i + 1);
+                    DpowersInputs[i][counter] = Math.Pow(d, i + 1);
+                }
+              
 
-                double r2 = r*r;
-                double g2 = g*g;
-                double b2 = b*b;
-                //double d2 = d*d;
-
-                Rinputs3[counter] = r*r2;
-                Ginputs3[counter] = g*g2;
-                Binputs3[counter] = b*b2;
-                //Dinputs3[counter] = ; // TODO
-
-                Rinputs2[counter] = r2;
-                Ginputs2[counter] = g2;
-                Binputs2[counter] = b2;
-                //Dinputs2[counter] = ; // TODO
-
-                Rinputs1[counter] = r;
-                Ginputs1[counter] = g;
-                Binputs1[counter] = b;
-                //Dinputs1[counter] = ; // TODO
-
-                Cinputs0[counter] = 1;
-
+                System.Drawing.Color colorOut = bitmapInfoFiltered.GetPixelColor(x, y);
                 Routputs[counter] = colorOut.RNormalized();
                 Goutputs[counter] = colorOut.GNormalized();
                 Boutputs[counter] = colorOut.BNormalized();
@@ -343,29 +342,19 @@ namespace MultiDimFunctionFitter
                 ++counter;
             }
 
-
-            List<double[]> columns = new List<double[]>
+            List<double[]> columns = new List<double[]>();
+            columns.Add(ConstantInputs);
+            for (int i = 0; i < polynomialOrder; ++i)
             {
-                Rinputs3,
-                Ginputs3,
-                Binputs3,
-                //Dinputs3,
-                            
-                Rinputs2,
-                Ginputs2,
-                Binputs2,
-                //Dinputs2,
-                            
-                Rinputs1,
-                Ginputs1,
-                Binputs1,
-                //Dinputs1,
-
-                Cinputs0
-            };
+                columns.Add(RpowersInputs[i]);
+                columns.Add(GpowersInputs[i]);
+                columns.Add(BpowersInputs[i]);
+                //columns.Add(DpowersInputs[i]);
+            }
+            
 
             // http://christoph.ruegg.name/blog/linear-regression-mathnet-numerics.html
-            var X = DenseMatrix.OfColumns(pixelsCount, 10, columns);           
+            var X = DenseMatrix.OfColumns(pixelsCount, columns.Count, columns);           
             var Yred = new DenseVector(Routputs);
             var Ygreen = new DenseVector(Goutputs);
             var Yblue = new DenseVector(Boutputs);
@@ -385,6 +374,7 @@ namespace MultiDimFunctionFitter
                 MyCatch(ex);	
             }
 
+
             // now that we have the coefficients, we try to regenerate the filtered image
 
             bitmapInfoFitted = new BitmapInfo(width, height, bitmapInfoSource.PixelFormat);
@@ -401,6 +391,11 @@ namespace MultiDimFunctionFitter
                 Imaging.CreateBitmapSourceFromHBitmap(
                     bitmapInfoFitted.ToBitmap().GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, 
                     System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+        }
+
+        private void ComboBoxPolynomialOrder_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateCoefficients();
         }
     }
 }
