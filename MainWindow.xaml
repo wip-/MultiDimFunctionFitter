@@ -35,9 +35,14 @@
                 <ComboBox Name="ComboBoxPolynomialOrder" ItemsSource="{Binding Orders}" SelectedIndex="3" SelectionChanged="ComboBoxPolynomialOrder_SelectionChanged"/>
             </StackPanel>
         </StackPanel>
+
+        <StackPanel Grid.Row="0" Grid.Column="2">
+            <Label Name="LabelTodo" >Todo add density parameter</Label>
+            <Button Name="ButtonSaveResult" Width ="100" Click="ButtonSaveResult_Click"> Save Result </Button>
+        </StackPanel>
+
+
         
-        
-        <Label Name="LabelTodo"  Grid.Row="0" Grid.Column="2">Todo add density parameter</Label>
         
         <ScrollViewer Name="ScrollViewerSource" Grid.Row="1" Grid.Column="0" 
                       ScrollChanged="ScrollViewer_ScrollChanged"

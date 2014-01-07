@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using MathNet.Numerics.LinearAlgebra.Double;
 using MathNet.Numerics.LinearRegression;
+using Microsoft.Win32;
 
 namespace MultiDimFunctionFitter
 {
@@ -19,7 +21,10 @@ namespace MultiDimFunctionFitter
     {
         BitmapInfo bitmapInfoSource;
         BitmapInfo bitmapInfoFiltered;
+        String filteredImageFileName;
+
         BitmapInfo bitmapInfoFitted;
+        Bitmap bitmapFitted;
 
         double[] ri;    // coefficients
         double[] gi;    // coefficients
@@ -192,7 +197,8 @@ namespace MultiDimFunctionFitter
 
         private void ImageSource_Drop(object sender, DragEventArgs e)
         {
-            String msg = LoadImage(ImageSource, out bitmapInfoSource, e);
+            String fileName;
+            String msg = LoadImage(ImageSource, out bitmapInfoSource, out fileName, e);
 
             if (msg != null)
                 LabelInfo.Content = msg;
@@ -204,7 +210,7 @@ namespace MultiDimFunctionFitter
 
         private void ImageFiltered_Drop(object sender, DragEventArgs e)
         {
-            String msg = LoadImage(ImageFiltered, out bitmapInfoFiltered, e);
+            String msg = LoadImage(ImageFiltered, out bitmapInfoFiltered, out filteredImageFileName, e);
 
             if (msg != null)
                 LabelInfo.Content = msg;
@@ -246,9 +252,11 @@ namespace MultiDimFunctionFitter
         private String LoadImage(
             System.Windows.Controls.Image destinationImage,
             out BitmapInfo destinationBitmapInfo,
+            out String filename,
             DragEventArgs e)
         {
             destinationBitmapInfo = null;
+            filename = String.Empty;
 
             try
             {
@@ -275,6 +283,9 @@ namespace MultiDimFunctionFitter
                         System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
 
                 destinationBitmapInfo = new BitmapInfo(destinationBitmap);
+
+                if( filename!=null)
+                    filename = imageSourceFileName;
 
                 return null;
             }
@@ -393,10 +404,11 @@ namespace MultiDimFunctionFitter
                 bitmapInfoFitted.SetPixelColor(x, y, colorOut);
             }
 
+            bitmapFitted = bitmapInfoFitted.ToBitmap();
 
             ImageFitted.Source =
                 Imaging.CreateBitmapSourceFromHBitmap(
-                    bitmapInfoFitted.ToBitmap().GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, 
+                    bitmapFitted.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, 
                     System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
         }
 
@@ -404,5 +416,32 @@ namespace MultiDimFunctionFitter
         {
             UpdateCoefficients();
         }
+
+        private void ButtonSaveResult_Click(object sender, RoutedEventArgs e)
+        {
+            if (bitmapFitted == null)
+                return;
+
+            SaveFileDialog dialogSaveFile = new SaveFileDialog();
+            dialogSaveFile.Filter = "Supported images|*.png";
+            dialogSaveFile.InitialDirectory = Path.GetDirectoryName(filteredImageFileName);
+            dialogSaveFile.FileName = AddToFileName(filteredImageFileName, "-rebuilt");
+
+            if ((bool)dialogSaveFile.ShowDialog())
+            {
+                Stream saveStream;
+                if ((saveStream = dialogSaveFile.OpenFile()) != null)
+                {
+                    bitmapFitted.Save(saveStream, ImageFormat.Png);
+                    saveStream.Close();
+                }
+            }
+        }
+
+        String AddToFileName(String filename, String addChars)
+        {
+            return Path.GetFileNameWithoutExtension(filename) + addChars + Path.GetExtension(filename);
+        }
+
     }
 }
